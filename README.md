@@ -5,7 +5,9 @@ An interactive, AI-powered chatbot built with local LLM orchestration. This proj
 ## 🌟 Key Features
 
 * **Local AI Execution**: Runs `qwen2.5-coder:7b-instruct-q6_K` completely locally using Ollama, ensuring privacy and offline capability.
-* **LangChain Orchestration**: Seamlessly handles prompt engineering, conversation memory, and model interactions.
+* **Hybrid RAG Routing**: Intelligent routing determines if a question can be answered directly or requires document retrieval.
+* **Retrieval-Augmented Generation**: Integrates a Chroma VectorDB with `nomic-embed-text` embeddings for answering context-aware questions from PDFs and documents.
+* **LangChain Orchestration**: Seamlessly handles prompt engineering, conversation memory, retrieval, and model interactions.
 * **FastAPI Backend**: A robust, high-performance API server providing real-time text streaming and well-documented endpoints.
 * **Gradio Frontend UI**: A clean, intuitive chat interface for users to easily interact with the AI assistant.
 * **Streaming Responses**: Real-time token streaming for a responsive conversational experience.
@@ -21,14 +23,24 @@ An interactive, AI-powered chatbot built with local LLM orchestration. This proj
 
 ```mermaid
 graph TD
-    A[Browser / Gradio UI] -->|HTTP Request| B[FastAPI Backend]
-    B -->|Prompt| C[LangChain Orchestration]
-    C -->|API Call| D[Ollama Server]
-    D -->|Inference| E[Qwen2.5-Code Model]
-    E -->|Stream Response| D
-    D -->|Stream Response| C
-    C -->|Stream Response| B
-    B -->|Server-Sent Events| A
+    User[User / Gradio UI] -->|HTTP Request| FastAPI[FastAPI Server /chat endpoint]
+    FastAPI --> Orchestrator[stream_llm Main Orchestrator]
+    
+    Orchestrator -->|Routing Prompt| Router{Should use RAG?}
+    
+    Router -->|No| NormalLLM[Normal LLM Direct Answer]
+    Router -->|Yes| RAG[RAG Pipeline]
+    
+    RAG --> Chroma[Chroma VectorDB]
+    Chroma --> Chunks[Retrieve Embedded Chunks]
+    Chunks --> Embeddings[Ollama Embeddings: nomic-embed-text]
+    
+    NormalLLM --> Qwen[Qwen 2.5 Inference]
+    Embeddings -->|Context + Prompt| Qwen
+    
+    Qwen -->|Stream Response| Orchestrator
+    Orchestrator -->|Stream Response| FastAPI
+    FastAPI -->|Server-Sent Events| User
 ```
 
 ## 🚀 Getting Started
@@ -37,9 +49,10 @@ graph TD
 
 * **Python 3.8+**
 * **Ollama**: Ensure you have [Ollama](https://ollama.ai/) installed on your machine.
-* **Qwen Model**: Pull the required model via Ollama.
+* **Qwen Model & Embeddings**: Pull the required models via Ollama.
   ```bash
   ollama run qwen2.5-coder:7b-instruct-q6_K
+  ollama pull nomic-embed-text
   ```
 
 ### Installation
@@ -58,7 +71,7 @@ graph TD
 
 3. **Install the dependencies**:
    ```bash
-   pip install fastapi uvicorn langchain-ollama pydantic gradio
+   pip install fastapi uvicorn langchain-ollama pydantic gradio langchain-chroma langchain-community pypdf
    ```
 
 ## 💻 Usage
@@ -92,6 +105,8 @@ python ui.py
 
 - ✅ **Local AI model** (Qwen 2.5 via Ollama)
 - ✅ **LangChain orchestration** (Prompt engineering & Memory)
+- ✅ **Hybrid RAG Routing** (Dynamically chooses between normal chat and document search)
+- ✅ **Retrieval-Augmented Generation** (ChromaDB + `nomic-embed-text` embeddings)
 - ✅ **FastAPI backend** (Robust server with Streaming responses)
 - ✅ **API routes** (Well-defined REST endpoints)
 - ✅ **Swagger docs** (Interactive API documentation)
@@ -104,10 +119,11 @@ Here is the step-by-step journey of a prompt from the user to the AI and back:
 1. **User Input (Gradio UI)**: The user types a message in the Gradio web interface (`ui.py`).
 2. **Frontend to Backend**: Gradio sends an HTTP POST request containing the prompt to the FastAPI backend (`main.py`) at the `/chat` endpoint.
 3. **API Routing**: FastAPI receives the request, validates the JSON body using Pydantic, and calls the `stream_llm` function.
-4. **LangChain Orchestration (`chat_bot.py`)**: 
-   - The user's prompt is appended to the LangChain conversation history (Memory).
-   - LangChain formats the entire conversation history (including the System Prompt) and sends it to the Ollama local server.
-5. **Local Inference (Ollama + Qwen2.5)**: The Qwen model processes the prompt and starts generating a response token by token.
+4. **LangChain Orchestration & Routing (`chat_bot.py`)**: 
+   - A router prompt asks the LLM if the question requires document retrieval.
+   - **If No**: The prompt and conversation history are sent directly to the model.
+   - **If Yes**: The prompt is embedded and queried against the Chroma VectorDB to retrieve relevant document chunks. The retrieved context, conversation history, and prompt are combined into a final prompt.
+5. **Local Inference (Ollama + Qwen2.5)**: The Qwen model processes the final prompt and starts generating a response token by token.
 6. **Streaming Response**: 
    - As tokens are generated, LangChain streams them back to FastAPI.
    - FastAPI uses `StreamingResponse` to send these tokens back to the frontend in real-time.
