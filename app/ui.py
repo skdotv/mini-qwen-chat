@@ -1,15 +1,17 @@
 import gradio as gr 
-from chat_bot import ask_llm
+from chat_bot import stream_llm
 
-def chat(message):
-    return ask_llm(message)
+def chat(message, history):
+    partial_message = ""
+    for token in stream_llm(message):
+        partial_message += token
+        yield partial_message
+    
 
-interface = gr.Interface(
+interface = gr.ChatInterface(
     fn=chat,
-    inputs="text",
-    outputs="text",
     title="Mini Qwen Chat",
-    description="Ask me anything about AI and coding!"
+    description="Mini Qwen Hybrid RAG Chat"
 )
 
 if __name__ == "__main__":

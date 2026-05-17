@@ -16,6 +16,8 @@ def home():
 
 @app.post("/chat")
 def chat(req: ChatRequest):
+    # response = ask_llm(req.prompt)
+    # return {"response": response}
     return StreamingResponse(
         stream_llm(req.prompt),
         media_type="text/plain"
