@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 .env
 .gradio/
+.DS_Store
+app/.DS_Store

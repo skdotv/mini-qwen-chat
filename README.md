@@ -9,14 +9,16 @@ An interactive, AI-powered chatbot built with local LLM orchestration. This proj
 * **FastAPI Backend**: A robust, high-performance API server providing real-time text streaming and well-documented endpoints.
 * **Gradio Frontend UI**: A clean, intuitive chat interface for users to easily interact with the AI assistant.
 * **Streaming Responses**: Real-time token streaming for a responsive conversational experience.
-
 ## 🎨 Interface Preview
 
 <p align="center">
-  <img src="app/assets/chat_ui.png" alt="Chat UI Demo" width="500"/>
+
+  <img src="app/assets/chat_ui.png" alt="Chat UI" width="500"/>
 </p>
 
+
 ## 🏗️ Architecture
+
 ```mermaid
 graph TD
     A[Browser / Gradio UI] -->|HTTP Request| B[FastAPI Backend]
