@@ -14,8 +14,9 @@ An interactive, AI-powered chatbot built with local LLM orchestration. This proj
 ## 🎨 Interface Preview
 
 <p align="center">
-
-  <img src="app/assets/chat_ui.png" alt="Chat UI" width="500"/>
+  <img src="app/assets/chat_1.png" alt="Chat UI 1" width="45%" />
+  &nbsp; &nbsp;
+  <img src="app/assets/chat_2.png" alt="Chat UI 2" width="45%" />
 </p>
 
 
