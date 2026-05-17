@@ -81,16 +81,31 @@ python ui.py
 
 * The Gradio interface will launch at: `http://127.0.0.1:7860`
 
-## 🗺️ Roadmap / Future Enhancements
+## ✨ What This Project Covers
 
-- [x] Chat memory support
-- [x] Streaming responses
-- [x] FastAPI backend routing
-- [x] Frontend UI integration
-- [ ] System prompts customization
-- [ ] Implement RAG (Retrieval-Augmented Generation)
-- [ ] Agentic workflows
-- [ ] MCP tools integration
+- ✅ **Local AI model** (Qwen 2.5 via Ollama)
+- ✅ **LangChain orchestration** (Prompt engineering & Memory)
+- ✅ **FastAPI backend** (Robust server with Streaming responses)
+- ✅ **API routes** (Well-defined REST endpoints)
+- ✅ **Swagger docs** (Interactive API documentation)
+- ✅ **Real AI server** (Locally hosted without third-party API dependencies)
+
+## 🔄 Data & Prompt Flow
+
+Here is the step-by-step journey of a prompt from the user to the AI and back:
+
+1. **User Input (Gradio UI)**: The user types a message in the Gradio web interface (`ui.py`).
+2. **Frontend to Backend**: Gradio sends an HTTP POST request containing the prompt to the FastAPI backend (`main.py`) at the `/chat` endpoint.
+3. **API Routing**: FastAPI receives the request, validates the JSON body using Pydantic, and calls the `stream_llm` function.
+4. **LangChain Orchestration (`chat_bot.py`)**: 
+   - The user's prompt is appended to the LangChain conversation history (Memory).
+   - LangChain formats the entire conversation history (including the System Prompt) and sends it to the Ollama local server.
+5. **Local Inference (Ollama + Qwen2.5)**: The Qwen model processes the prompt and starts generating a response token by token.
+6. **Streaming Response**: 
+   - As tokens are generated, LangChain streams them back to FastAPI.
+   - FastAPI uses `StreamingResponse` to send these tokens back to the frontend in real-time.
+7. **UI Update**: Gradio dynamically updates the chat interface as the text streams in, creating a typing effect.
+8. **Memory Update**: Once generation is complete, the full AI response is saved back to LangChain's chat history for future context.
 
 ## 🤝 Contributing
 
