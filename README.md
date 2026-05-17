@@ -10,8 +10,13 @@ An interactive, AI-powered chatbot built with local LLM orchestration. This proj
 * **Gradio Frontend UI**: A clean, intuitive chat interface for users to easily interact with the AI assistant.
 * **Streaming Responses**: Real-time token streaming for a responsive conversational experience.
 
-## 🏗️ Architecture
+## 🎨 Interface Preview
 
+<p align="center">
+  <img src="assets/chat_ui_demo.png" alt="Chat UI Demo" width="500"/>
+</p>
+
+## 🏗️ Architecture
 ```mermaid
 graph TD
     A[Browser / Gradio UI] -->|HTTP Request| B[FastAPI Backend]
