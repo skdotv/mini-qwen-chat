@@ -1,6 +1,6 @@
 # Mini Qwen Chat 🤖
 
-An interactive, AI-powered chatbot built with local LLM orchestration. This project leverages **Qwen 2.5** (running locally via Ollama) integrated through **LangChain** with a **FastAPI** backend and a **Gradio** web interface.
+An interactive, AI-powered chat system built with local LLM orchestration. This project leverages **Qwen 2.5** (running locally via Ollama) integrated through **LangChain** with a **FastAPI** backend and a **Gradio** web interface.
 
 ## 🌟 Key Features
 
