@@ -57,10 +57,15 @@ def without_rag(question):
 
 def with_rag(question):
     docs = retriever.invoke(question) 
+    print(f"##### {docs[0].metadata} #####")
     context = "\n\n".join([doc.page_content for doc in docs])
     history = "\n".join([f"{msg.__class__.__name__} : {msg.content}" 
     for msg in chat_history
     ])
+    print(f"\n##### DOCUMENT METADATA {docs[0].metadata} #####\n")
+    for doc in docs:
+        print(doc.metadata)
+        print("\n")
     
     final_prompt = prompt_template.invoke({ "history":history, "context":context, "question":question})
     response = llm.invoke(final_prompt)
@@ -94,7 +99,17 @@ def stream_llm(prompt: str):
          """
     else:
         yield "📚 Retrieving From Documents...\n\n"
-        docs = retriever.invoke(prompt)        
+        docs = retriever.invoke(prompt)
+        sources = citation(docs)
+
+        print(f"##### {docs[0].metadata} #####")
+        print(f"\n##### DOCUMENT METADATA {docs[0].metadata} #####\n")
+        for doc in docs:
+            print(doc.metadata)
+            print("\n")
+
+        if docs:
+            print(f"##### {docs[0].metadata} #####", flush=True)
         context = "\n\n".join([doc.page_content for doc in docs])
         final_prompt = prompt_template.invoke({"history":history, "context":context, "question":prompt})    
         
@@ -103,9 +118,26 @@ def stream_llm(prompt: str):
         token = chunk.content
         full_response += token 
         yield token 
+    if use_rag:
+        yield "\n\n📑 Sources:\n"
+        for source in sources:
+            yield f"{source}\n"
 
-        chat_history.append(f"User: {prompt}" )
-        chat_history.append(f"AI: {full_response}") 
+
+    chat_history.append(f"User: {prompt}" )
+    chat_history.append(f"AI: {full_response}") 
+
+def citation(docs):
+    sources = []
+    for doc in docs:
+        metadata = doc.metadata
+        source = metadata.get("source", "Unknown Source")
+        page = metadata.get("page", "N/A")
+        filename = source.split("/")[-1]
+        sources.append(f"- {filename} (Page {page})")
+
+    sources = list(set(sources))
+    return sources
 
   
 
@@ -114,6 +146,7 @@ def should_use_rag(question: str):
         You are a routing AI.
         Determine if this question requires
         retrieving information from uploaded documents.
+        if the question contain pdf, it should directly return YES
         Answer ONLY:
         YES
         or
