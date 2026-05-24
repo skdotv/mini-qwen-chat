@@ -99,18 +99,20 @@ def stream_llm(prompt: str):
          """
     else:
         yield "📚 Retrieving From Documents...\n\n"
-        docs = retriever.invoke(prompt)
-        sources = citation(docs)
-
-        print(f"##### {docs[0].metadata} #####")
-        print(f"\n##### DOCUMENT METADATA {docs[0].metadata} #####\n")
-        for doc in docs:
-            print(doc.metadata)
+        docs_with_scores = vector_store.similarity_search_with_score(prompt, k=6)
+        best_score = docs_with_scores[0][1]
+        threshold = best_score + 0.15
+        relevant_docs = []
+        for d,s in docs_with_scores:
+            if s < threshold:
+                print(f"Score: {s}")
+                relevant_docs.append(d)
+                
+            print(f"Outside Score: {s}")
             print("\n")
-
-        if docs:
-            print(f"##### {docs[0].metadata} #####", flush=True)
-        context = "\n\n".join([doc.page_content for doc in docs])
+            
+        sources = citation(relevant_docs)
+        context = "\n\n".join([doc.page_content for doc in relevant_docs])
         final_prompt = prompt_template.invoke({"history":history, "context":context, "question":prompt})    
         
     full_response = ""
@@ -132,7 +134,7 @@ def citation(docs):
     for doc in docs:
         metadata = doc.metadata
         source = metadata.get("source", "Unknown Source")
-        page = metadata.get("page", "N/A")
+        page = metadata.get("page",0) + 1
         filename = source.split("/")[-1]
         sources.append(f"- {filename} (Page {page})")
 

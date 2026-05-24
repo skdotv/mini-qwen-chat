@@ -7,6 +7,8 @@ An interactive, AI-powered chat system built with local LLM orchestration. This 
 * **Local AI Execution**: Runs `qwen2.5-coder:7b-instruct-q6_K` completely locally using Ollama, ensuring privacy and offline capability.
 * **Hybrid RAG Routing**: Intelligent routing determines if a question can be answered directly or requires document retrieval.
 * **Retrieval-Augmented Generation**: Integrates a Chroma VectorDB with `nomic-embed-text` embeddings for answering context-aware questions from PDFs and documents.
+* **Retrieval Scoring**: Uses similarity scores to rank candidate chunks before prompt assembly.
+* **Confidence Filtering**: Filters retrieved chunks using a score window relative to the best match, reducing low-confidence context.
 * **Source Citations**: RAG answers append document citations using chunk metadata such as source filename and page number.
 * **LangChain Orchestration**: Seamlessly handles prompt engineering, conversation memory, retrieval, and model interactions.
 * **FastAPI Backend**: A robust, high-performance API server providing real-time text streaming and well-documented endpoints.
@@ -36,7 +38,9 @@ graph TD
     Router -->|Yes| RAG[RAG Pipeline]
     
     RAG --> Chroma[Chroma VectorDB]
-    Chroma --> Chunks[Retrieve Embedded Chunks]
+    Chroma --> Scoring[Similarity Search with Scores]
+    Scoring --> Filtering[Confidence Filtering]
+    Filtering --> Chunks[Relevant Chunks]
     Chunks --> Embeddings[Ollama Embeddings: nomic-embed-text]
     RAG --> Citations[Source Citations from Metadata]
     
@@ -113,6 +117,8 @@ python ui.py
 - ✅ **LangChain orchestration** (Prompt engineering & Memory)
 - ✅ **Hybrid RAG Routing** (Dynamically chooses between normal chat and document search)
 - ✅ **Retrieval-Augmented Generation** (ChromaDB + `nomic-embed-text` embeddings)
+- ✅ **Retrieval scoring** (Ranks candidate chunks using similarity scores)
+- ✅ **Confidence filtering** (Keeps only chunks close to the best retrieval score)
 - ✅ **Source citation rendering** (Shows retrieved file name and page number for RAG answers)
 - ✅ **FastAPI backend** (Robust server with Streaming responses)
 - ✅ **API routes** (Well-defined REST endpoints)
@@ -124,7 +130,7 @@ python ui.py
 Use the diagrams below when you want the step-by-step execution order of the RAG system. The project has two distinct RAG stages:
 
 1. **Ingestion Pipeline**: Load PDF content, split it into chunks, embed each chunk, and persist the vectors plus metadata into Chroma.
-2. **Retrieval Pipeline**: Route the user query, retrieve the most relevant chunks, build the final prompt, generate the answer, and append citations.
+2. **Retrieval Pipeline**: Route the user query, score candidate chunks, filter them by confidence, build the final prompt, generate the answer, and append citations.
 
 ### 1. Ingestion Pipeline
 
@@ -152,7 +158,7 @@ Chroma is the local vector data store for this project. It persists embeddings u
 
 ### 2. Retrieval Pipeline
 
-The retrieval path is implemented in `app/chat_bot.py`. For each prompt, the application first decides whether retrieval is needed, then performs similarity search, assembles context, generates an answer, and emits citations from retrieved chunk metadata.
+The retrieval path is implemented in `app/chat_bot.py`. For each prompt, the application first decides whether retrieval is needed, then performs similarity search with scores, filters low-confidence matches, assembles context, generates an answer, and emits citations from retrieved chunk metadata.
 
 ```mermaid
 sequenceDiagram
@@ -172,8 +178,9 @@ sequenceDiagram
         LLM-->>UI: Stream answer
     else RAG answer
         Router-->>UI: YES
-        UI->>Retriever: Retrieve top-k chunks
-        Retriever-->>Prompt: Chunks + metadata
+        UI->>Retriever: Retrieve top-k chunks with scores
+        Retriever-->>Prompt: Chunks + scores + metadata
+        Prompt->>Prompt: Keep docs within confidence threshold
         Prompt->>LLM: History + context + question
         LLM-->>UI: Stream grounded answer
         Retriever->>Cite: Source metadata
@@ -183,7 +190,11 @@ sequenceDiagram
 
 **Data retrieval**
 
-At query time, the retriever runs similarity search against the stored embeddings and returns the top matching chunks. The application uses the chunk text as model context and uses chunk metadata to format a deduplicated source list such as `filename.pdf (Page N)`.
+At query time, the retriever runs `similarity_search_with_score(...)` against the stored embeddings and fetches the top candidate chunks. The application then keeps only documents whose score falls within a small window of the best match, using that filtered set as the final context. Chunk metadata from the retained documents is used to format a deduplicated source list such as `filename.pdf (Page N)`.
+
+**Scoring and confidence filtering**
+
+The current retrieval flow requests the top 6 candidates, takes the best score, and keeps documents whose score is below `best_score + 0.15`. This acts as a simple confidence filter so weakly related chunks do not dilute the final prompt.
 
 ### Diagram Selection Guide
 
@@ -201,14 +212,15 @@ Here is the step-by-step journey of a prompt from the user to the AI and back:
 4. **LangChain Orchestration & Routing (`chat_bot.py`)**:
    - A router prompt asks the LLM if the question requires document retrieval.
    - **If No**: The prompt and conversation history are sent directly to the model.
-   - **If Yes**: The prompt is queried against the Chroma VectorDB to retrieve relevant document chunks. The retrieved context, conversation history, and prompt are combined into a final prompt, and document metadata is formatted into citations.
+   - **If Yes**: The prompt is queried against the Chroma VectorDB with similarity scoring, low-confidence chunks are filtered out, the remaining context is combined with conversation history into a final prompt, and document metadata is formatted into citations.
 5. **Local Inference (Ollama + Qwen2.5)**: The Qwen model processes the final prompt and starts generating a response token by token.
 6. **Streaming Response**: 
    - As tokens are generated, LangChain streams them back to FastAPI.
    - FastAPI uses `StreamingResponse` to send these tokens back to the frontend in real-time.
 7. **UI Update**: Gradio dynamically updates the chat interface as the text streams in, creating a typing effect.
-8. **Citation Rendering**: For RAG answers, the application appends a short sources section using retrieved metadata such as filename and page number.
-9. **Memory Update**: Once generation is complete, the full AI response is saved back to LangChain's chat history for future context.
+8. **Confidence Filtering**: The application retains only chunks that are close to the best retrieval score before building the final context.
+9. **Citation Rendering**: For RAG answers, the application appends a short sources section using retrieved metadata such as filename and page number.
+10. **Memory Update**: Once generation is complete, the full AI response is saved back to LangChain's chat history for future context.
 
 ## 🤝 Contributing
 
