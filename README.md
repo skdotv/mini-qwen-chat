@@ -7,6 +7,7 @@ An interactive, AI-powered chat system built with local LLM orchestration. This 
 * **Local AI Execution**: Runs `qwen2.5-coder:7b-instruct-q6_K` completely locally using Ollama, ensuring privacy and offline capability.
 * **Hybrid RAG Routing**: Intelligent routing determines if a question can be answered directly or requires document retrieval.
 * **Retrieval-Augmented Generation**: Integrates a Chroma VectorDB with `nomic-embed-text` embeddings for answering context-aware questions from PDFs and documents.
+* **Multi-Document RAG**: Ingests and retrieves across all PDF files placed in the `documents/` directory.
 * **Retrieval Scoring**: Uses similarity scores to rank candidate chunks before prompt assembly.
 * **Confidence Filtering**: Filters retrieved chunks using a score window relative to the best match, reducing low-confidence context.
 * **Source Citations**: RAG answers append document citations using chunk metadata such as source filename and page number.
@@ -17,9 +18,11 @@ An interactive, AI-powered chat system built with local LLM orchestration. This 
 ## 🎨 Interface Preview
 
 <p align="center">
-  <img src="app/assets/chat_1.png" alt="Chat UI 1" width="45%" />
-  &nbsp; &nbsp;
-  <img src="app/assets/chat_2.png" alt="Chat UI 2" width="45%" />
+  <img src="app/assets/chat_1.png" alt="Chat UI 1" width="32%" />
+  &nbsp;
+  <img src="app/assets/chat_2.png" alt="Chat UI 2" width="32%" />
+  &nbsp;
+  <img src="app/assets/citation_multi-rag.png" alt="Chat UI with Multi-Document RAG Citations" width="32%" />
 </p>
 
 
@@ -117,6 +120,7 @@ python ui.py
 - ✅ **LangChain orchestration** (Prompt engineering & Memory)
 - ✅ **Hybrid RAG Routing** (Dynamically chooses between normal chat and document search)
 - ✅ **Retrieval-Augmented Generation** (ChromaDB + `nomic-embed-text` embeddings)
+- ✅ **Multi-Document RAG** (Indexes all PDFs from the `documents/` directory into one retrievable corpus)
 - ✅ **Retrieval scoring** (Ranks candidate chunks using similarity scores)
 - ✅ **Confidence filtering** (Keeps only chunks close to the best retrieval score)
 - ✅ **Source citation rendering** (Shows retrieved file name and page number for RAG answers)
@@ -129,22 +133,22 @@ python ui.py
 
 Use the diagrams below when you want the step-by-step execution order of the RAG system. The project has two distinct RAG stages:
 
-1. **Ingestion Pipeline**: Load PDF content, split it into chunks, embed each chunk, and persist the vectors plus metadata into Chroma.
+1. **Ingestion Pipeline**: Load all PDF files from the `documents/` directory, split them into chunks, embed each chunk, and persist the vectors plus metadata into Chroma.
 2. **Retrieval Pipeline**: Route the user query, score candidate chunks, filter them by confidence, build the final prompt, generate the answer, and append citations.
 
 ### 1. Ingestion Pipeline
 
-The ingestion path is implemented in `app/rag.py`. It prepares the document corpus once and stores it in the vector database for later retrieval.
+The ingestion path is implemented in `app/rag.py`. It scans the `documents/` directory for `*.pdf` files, loads all matching documents, and stores the combined corpus in the vector database for later retrieval.
 
 ```mermaid
 sequenceDiagram
-    participant PDF as PDF Document
+    participant PDFs as PDF Files
     participant Loader as PyPDFLoader
     participant Splitter as RecursiveCharacterTextSplitter
     participant Embedder as OllamaEmbeddings
     participant Chroma as Chroma Vector DB
 
-    PDF->>Loader: Load pages and metadata
+    PDFs->>Loader: Load pages and metadata from each PDF
     Loader->>Splitter: Pass LangChain documents
     Splitter->>Splitter: Create overlapping chunks
     Splitter->>Embedder: Send chunk text
@@ -154,7 +158,7 @@ sequenceDiagram
 
 **Data store**
 
-Chroma is the local vector data store for this project. It persists embeddings under `chroma_db/` and keeps each chunk's metadata, including the original `source` path and `page` number. That metadata is what later enables answer citations.
+Chroma is the local vector data store for this project. It persists embeddings under `chroma_db/` and keeps each chunk's metadata, including the original `source` path and `page` number. Because the store is built from every PDF in `documents/`, retrieval can span multiple source files and still preserve per-document citations.
 
 ### 2. Retrieval Pipeline
 
@@ -190,7 +194,7 @@ sequenceDiagram
 
 **Data retrieval**
 
-At query time, the retriever runs `similarity_search_with_score(...)` against the stored embeddings and fetches the top candidate chunks. The application then keeps only documents whose score falls within a small window of the best match, using that filtered set as the final context. Chunk metadata from the retained documents is used to format a deduplicated source list such as `filename.pdf (Page N)`.
+At query time, the retriever runs `similarity_search_with_score(...)` against the stored embeddings and fetches the top candidate chunks from the full multi-document corpus. The application then keeps only documents whose score falls within a small window of the best match, using that filtered set as the final context. Chunk metadata from the retained documents is used to format a deduplicated source list such as `filename.pdf (Page N)`.
 
 **Scoring and confidence filtering**
 

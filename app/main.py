@@ -1,7 +1,8 @@
 from fastapi.responses import StreamingResponse
 from fastapi import FastAPI
 from pydantic import BaseModel
-from chat_bot import ask_llm, stream_llm
+from app.chat_bot import stream_llm
+
 
 app = FastAPI()
 
