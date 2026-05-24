@@ -21,7 +21,9 @@ An interactive, AI-powered chat system built with local LLM orchestration. This 
 </p>
 
 
-## 🏗️ Architecture
+## 🏗️ System Architecture
+
+Use this diagram for a high-level view of the main runtime components and how requests move through the application.
 
 ```mermaid
 graph TD
@@ -117,9 +119,9 @@ python ui.py
 - ✅ **Swagger docs** (Interactive API documentation)
 - ✅ **Real AI server** (Locally hosted without third-party API dependencies)
 
-## 📚 RAG Pipeline
+## 📚 RAG Pipelines
 
-This project has two distinct RAG stages:
+Use the diagrams below when you want the step-by-step execution order of the RAG system. The project has two distinct RAG stages:
 
 1. **Ingestion Pipeline**: Load PDF content, split it into chunks, embed each chunk, and persist the vectors plus metadata into Chroma.
 2. **Retrieval Pipeline**: Route the user query, retrieve the most relevant chunks, build the final prompt, generate the answer, and append citations.
@@ -182,6 +184,12 @@ sequenceDiagram
 **Data retrieval**
 
 At query time, the retriever runs similarity search against the stored embeddings and returns the top matching chunks. The application uses the chunk text as model context and uses chunk metadata to format a deduplicated source list such as `filename.pdf (Page N)`.
+
+### Diagram Selection Guide
+
+- Use `System Architecture` when you want to explain the overall design.
+- Use `Ingestion Pipeline` when you want to explain how documents are stored in the vector database.
+- Use `Retrieval Pipeline` when you want to explain how a user query becomes a grounded answer with citations.
 
 ## 🔄 Data & Prompt Flow
 
