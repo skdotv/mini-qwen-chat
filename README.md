@@ -200,11 +200,11 @@ At query time, the retriever runs `similarity_search_with_score(...)` against th
 
 The current retrieval flow requests the top 6 candidates, takes the best score, and keeps documents whose score is below `best_score + 0.15`. This acts as a simple confidence filter so weakly related chunks do not dilute the final prompt.
 
-### Diagram Selection Guide
+### Diagrams
 
-- Use `System Architecture` when you want to explain the overall design.
-- Use `Ingestion Pipeline` when you want to explain how documents are stored in the vector database.
-- Use `Retrieval Pipeline` when you want to explain how a user query becomes a grounded answer with citations.
+-  `System Architecture` explains overall design.
+-  `Ingestion Pipeline`  how documents are stored in the vector database.
+-  `Retrieval Pipeline`  how a user query becomes a grounded answer with citations.
 
 ## 🔄 Data & Prompt Flow
 
