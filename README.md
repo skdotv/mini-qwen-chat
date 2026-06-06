@@ -7,6 +7,7 @@ For advanced chat flow documentation, see [app/advanced/README.md](app/advanced/
 | Advanced Phase | Details |
 | --- | --- |
 | Simple Stateful Conversation Engine | [Phase 01 Article](app/advanced/phases/01_simple_stateful_conversation_engine.md) |
+| Layered Memory and Context Architecture | [Phase 02 Article](app/advanced/phases/02_layered_memory_context_architecture.md) |
 
 ## 🌟 Key Features
 

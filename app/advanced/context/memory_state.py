@@ -3,5 +3,5 @@
 memory_state = {
     "summary":"",
     "recent_messages":[],
-    "retrived_messages":[],
+    "retrived_context":[],
 } 

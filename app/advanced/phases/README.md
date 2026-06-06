@@ -22,6 +22,7 @@ Use this format for every new phase file:
 ## Current Sequence
 
 - `01_simple_stateful_conversation_engine.md`
+- `02_layered_memory_context_architecture.md`
 
 The goal is to preserve implementation history in order, not just the latest state.
 

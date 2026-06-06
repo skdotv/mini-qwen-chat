@@ -2,14 +2,15 @@
 
 This folder is the start of a more advanced conversation pipeline for the project.
 
-Implementation history is tracked in [phases/README.md](phases/README.md). The first documented milestone is [01_simple_stateful_conversation_engine.md](phases/01_simple_stateful_conversation_engine.md).
+Implementation history is tracked in [phases/README.md](phases/README.md). The documented milestones currently are [01_simple_stateful_conversation_engine.md](phases/01_simple_stateful_conversation_engine.md) and [02_layered_memory_context_architecture.md](phases/02_layered_memory_context_architecture.md).
 
-The first thing implemented here is a simple stateful conversation memory:
+The advanced flow started as a simple stateful conversation memory and has now moved into a layered memory-driven architecture:
 
-- User messages are stored in memory.
-- AI responses are stored in memory.
-- Each new request sends the accumulated recent conversation back to the model.
-- The state currently lives in a process-local Python dictionary, so it resets when the app restarts.
+- user and AI turns are stored in centralized memory state
+- context is built as a structured object before prompt generation
+- prompts are assembled through a dedicated prompt builder
+- older turns can be compressed into summary memory
+- recent turns stay available as short-term conversational context
 
 ## Run Reference
 
@@ -17,22 +18,25 @@ For environment setup, install commands, and a quick API test, use [phases/READM
 
 ## Current Behavior
 
-The active flow is small and intentionally simple:
+The active flow is now layered:
 
 1. `main.py` exposes a `POST /chat-summary` endpoint.
 2. `conversation_engine.py` appends the incoming prompt to `recent_messages`.
-3. The full recent message list is sent to the Ollama chat model.
-4. The model response is appended back into memory and returned.
+3. `context/context_builder.py` creates a structured context object from memory state.
+4. `context/context_prompt.py` converts that context into model-ready messages.
+5. The Ollama chat model generates the response from the structured prompt.
+6. The response is appended back into memory and summarization may compress older turns.
 
-This gives the assistant short-term conversational continuity without needing a database or external memory store.
+This gives the assistant both short-term continuity and the first layer of long-term memory management without introducing a database yet.
 
 ## Folder Structure
 
 - `main.py` contains the FastAPI entrypoint for the advanced chat route.
-- `conversation_engine.py` handles the stateful chat loop.
+- `conversation_engine.py` orchestrates memory updates, context building, prompt building, model invocation, and summary checks.
 - `context/memory_state.py` defines the shared in-memory conversation state.
-- `context/summary_memory.py` contains the summarize trigger logic.
-- `context/context_builder.py` is reserved for future prompt/context assembly work.
+- `context/context_builder.py` builds a structured context object from conversation state.
+- `context/context_prompt.py` builds model-ready messages from structured context.
+- `context/summary_memory.py` manages summarize triggers and long-term memory compression.
 - `context/token_manager.py` is reserved for future token-budget management.
 - `models/`, `prompts/`, and `retrieval/` are scaffolding for later expansion.
 
@@ -44,28 +48,28 @@ The shared state currently looks like this:
 memory_state = {
     "summary": "",
     "recent_messages": [],
-    "retrived_messages": [],
+    "retrived_context": [],
 }
 ```
 
 Meaning:
 
-- `summary` is reserved for condensed conversation memory.
-- `recent_messages` stores the live turn-by-turn chat history.
-- `retrived_messages` is reserved for retrieved context that may later be merged into prompts.
+- `summary` stores condensed long-term conversation memory.
+- `recent_messages` stores the live short-term chat history.
+- `retrived_context` is reserved for retrieved context that may later be merged into prompts.
 
 ## Limitations
 
 - Memory is not persisted across restarts.
 - There is no session separation, so all requests share the same in-process memory.
-- Summarization is not wired into the chat loop yet.
+- Retrieval-aware context is not wired into the advanced flow yet.
 - Token management is not implemented yet.
-- Retrieval-aware context assembly is not implemented yet.
+- Summary retention is still controlled by a simple fixed-window policy.
 
 ## Next Likely Steps
 
-- Trigger summarization after a configurable number of messages.
-- Replace unbounded `recent_messages` growth with summary plus recent turns.
 - Add per-session memory instead of one global shared state.
 - Integrate retrieved context into the advanced pipeline.
 - Add token-budget control before sending context to the model.
+- Improve summary quality and memory retention rules.
+- Add more structured memory categories beyond a single summary field.
