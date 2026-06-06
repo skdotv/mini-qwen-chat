@@ -4,7 +4,7 @@ The first milestone in `app/advanced` is a small but important shift: the chat f
 
 This phase does not introduce persistence, retrieval, or summarization yet. Its purpose is narrower and more practical. It establishes the minimum working shape of a stateful conversation engine, proves the request flow end to end, and creates clear extension points for later phases.
 
-Run and environment setup are documented in [README.md](/Users/vinodkhadka/Documents/AI/mini-qwen-chat/app/advanced/phases/README.md).
+Run and environment setup are documented in [README.md](README.md).
 
 ## Why This Phase Matters
 

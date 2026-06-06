@@ -2,6 +2,12 @@
 
 An interactive, AI-powered chat system built with local LLM orchestration. This project leverages **Qwen 2.5** (running locally via Ollama) integrated through **LangChain** with a **FastAPI** backend and a **Gradio** web interface.
 
+For advanced chat flow documentation, see [app/advanced/README.md](app/advanced/README.md).
+
+| Advanced Phase | Details |
+| --- | --- |
+| Simple Stateful Conversation Engine | [Phase 01 Article](app/advanced/phases/01_simple_stateful_conversation_engine.md) |
+
 ## 🌟 Key Features
 
 * **Local AI Execution**: Runs `qwen2.5-coder:7b-instruct-q6_K` completely locally using Ollama, ensuring privacy and offline capability.

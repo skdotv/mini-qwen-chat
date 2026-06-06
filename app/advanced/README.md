@@ -2,7 +2,7 @@
 
 This folder is the start of a more advanced conversation pipeline for the project.
 
-Implementation history is tracked in [phases/README.md](/Users/vinodkhadka/Documents/AI/mini-qwen-chat/app/advanced/phases/README.md). The first documented milestone is [01_simple_stateful_conversation_engine.md](/Users/vinodkhadka/Documents/AI/mini-qwen-chat/app/advanced/phases/01_simple_stateful_conversation_engine.md).
+Implementation history is tracked in [phases/README.md](phases/README.md). The first documented milestone is [01_simple_stateful_conversation_engine.md](phases/01_simple_stateful_conversation_engine.md).
 
 The first thing implemented here is a simple stateful conversation memory:
 
@@ -13,9 +13,7 @@ The first thing implemented here is a simple stateful conversation memory:
 
 ## Run Reference
 
-For environment setup, install commands, and a quick API test, use [phases/README.md](/Users/vinodkhadka/Documents/AI/mini-qwen-chat/app/advanced/phases/README.md).
-
-For the full write-up of Phase 01, diagrams, and implementation notes, use [01_simple_stateful_conversation_engine.md](/Users/vinodkhadka/Documents/AI/mini-qwen-chat/app/advanced/phases/01_simple_stateful_conversation_engine.md).
+For environment setup, install commands, and a quick API test, use [phases/README.md](phases/README.md).
 
 ## Current Behavior
 
