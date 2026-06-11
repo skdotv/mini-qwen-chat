@@ -23,6 +23,7 @@ Use this format for every new phase file:
 
 - `01_simple_stateful_conversation_engine.md`
 - `02_layered_memory_context_architecture.md`
+- `03_structured_memory_response_flow.md`
 
 The goal is to preserve implementation history in order, not just the latest state.
 
